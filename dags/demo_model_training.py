@@ -17,24 +17,6 @@ dag = DAG("my_dag", # Dag id
 def _training_model():
     return random.randint(0, 10)
 
-# Tasks are implemented under the dag object
-# training_model_A = PythonOperator(
-#     task_id="training_model_A",
-#     python_callable=_training_model,
-#     dag=dag
-# )
-# training_model_B = PythonOperator(
-#     task_id="training_model_B",
-#     python_callable=_training_model,
-#     dag=dag
-# )
-# training_model_C = PythonOperator(
-#     task_id="training_model_C",
-#     python_callable=_training_model,
-#     dag=dag
-# )
-
-
 
 def _choosing_best_model(ti):
     accuracies = ti.xcom_pull(task_ids=[
@@ -42,10 +24,24 @@ def _choosing_best_model(ti):
         'training_model_B',
         'training_model_C'
     ])
-    if max(accuracies) > 8:
-        return 'accurate'
-    return 'inaccurate'
+    return 'accurate' if max(accuracies) > 8 else 'inaccurate'
     
+training_model_tasks = [
+    PythonOperator(
+        task_id=f"training_model_{model_id}",
+        python_callable=_training_model,
+        op_kwargs={
+            "model": model_id
+        },
+        dag=dag
+    ) for model_id in ['A', 'B', 'C']
+]
+
+choosing_best_model = BranchPythonOperator(
+    task_id="choosing_best_model",
+    python_callable=_choosing_best_model,
+    dag=dag
+)
 
 
 accurate = BashOperator(
@@ -59,24 +55,6 @@ inaccurate = BashOperator(
     dag=dag
 )
 
-
-training_model_tasks = [
-    PythonOperator(
-        task_id=f"training_model_{model_id}",
-        python_callable=_training_model,
-        op_kwargs={
-            "model": model_id
-        },
-        dag=dag
-    ) for model_id in ['A', 'B', 'C']
-]
-
-
-choosing_best_model = BranchPythonOperator(
-    task_id="choosing_best_model",
-    python_callable=_choosing_best_model,
-    dag=dag
-)
 
 training_model_tasks >> choosing_best_model >> [accurate, inaccurate]
 
