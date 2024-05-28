@@ -1,7 +1,12 @@
 # Testing Airflow
-
+This repo is to improve my knowledge about Apache Airflow
 
 ## Notes
+DAG arguments:
+- start_date: ngay bat dau
+- schedule_interval: lich trinh chay  ( @once, @hourly, @daily, @weekly, @monthly, @yearly )
+- catchup (optional)
+
 
 Download default `docker-compose.yaml` file for Airlfow
 
